@@ -12,7 +12,7 @@ unbuiltin = {
     no_falling = true, -- Falling nodes
     no_items = true, -- Item entities
     no_privs = true, -- All non-client privs
-    unregister_commands = true,
+    unregister_commands = true, -- Blind unregister ... may break mods
     no_commands = true,
 }
 
@@ -23,7 +23,7 @@ local to_unregister = {
         on_respawnplayers = 1,
     },
     unregister_commands = {
-        chatcommands = -1,
+        chatcommands = -1, -- Currently unregisters ALL commands
     },
     no_commands = {
         on_chat_messages = 1,
@@ -85,7 +85,7 @@ if unbuiltin.no_items then
 end
 
 -- Clear the player environment and interface
-core.register_on_joinplayer(function(player)
+table.insert(core.registered_on_joinplayers, 1, function(player)
     if unbuiltin.no_hud then
         player:hud_set_flags({
             basic_debug = false,
