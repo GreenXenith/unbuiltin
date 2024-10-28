@@ -31,7 +31,7 @@ for _, registered in ipairs({
 end
 
 -- Clear the player environment and interface
-minetest.register_on_joinplayer(function(player)
+core.register_on_joinplayer(function(player)
     player:hud_set_flags({
         basic_debug = false,
         chat = false,
@@ -83,4 +83,4 @@ minetest.register_on_joinplayer(function(player)
     player:set_pos(vector.zero())
 end)
 
-minetest.set_timeofday(0.5)
+core.set_timeofday(0.5)
