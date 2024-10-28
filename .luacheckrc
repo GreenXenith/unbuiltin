@@ -1,5 +1,5 @@
 globals = {
-    "minetest", "core",
+    "minetest", "core", "unbuiltin",
 }
 
 read_globals = {
