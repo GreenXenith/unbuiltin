@@ -61,6 +61,10 @@ core.register_on_joinplayer(function(player)
         sneak = false,
     })
 
+    player:set_armor_groups({
+        fall_damage_add_percent = 1300,
+    })
+
     player:set_sky({
         type = "plain",
         base_color = "#888",
@@ -84,3 +88,43 @@ core.register_on_joinplayer(function(player)
 end)
 
 core.set_timeofday(0.5)
+
+core.registered_on_player_events = {}
+core.register_on_player_event = function(callback)
+    table.insert(core.registered_on_player_events, callback)
+end
+
+table.insert(core.registered_on_player_hpchanges.modifiers, function(player, _, reason)
+    local data
+    if reason.type == "fall" then
+        data = {pos = player:get_pos(), velocity = player:get_velocity()}
+    elseif reason.type == "node_damage" then
+        data = {pos = reason.node_pos, node = reason.node}
+    else
+        return 0
+    end
+
+    for _, callback in pairs(core.registered_on_player_events) do
+        callback(player, reason.type, data)
+    end
+
+    return 0
+end)
+
+if not core.has_feature("abm_without_neighbors") then
+    core.register_playerevent(function(player, event)
+        if event == "breath_changed" then
+            if player:get_breath() ~= core.PLAYER_MAX_BREATH_DEFAULT then
+                player:set_breath(core.PLAYER_MAX_BREATH_DEFAULT)
+            end
+        end
+    end)
+else
+    core.register_on_joinplayer(function(player)
+        -- Keep node_damage because why not
+        player:set_flags({
+            breathing = false,
+            drowning = false,
+        })
+    end)
+end
