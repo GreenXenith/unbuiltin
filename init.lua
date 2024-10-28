@@ -1,16 +1,17 @@
 -- EVERYTHING MUST GO --
 
 unbuiltin = {
-    no_hud = true,
-    no_player = true,
+    no_hud = true, -- ALL hud
+    no_player = true, -- Player visuals
     no_gravity = true,
     no_movement = true,
     no_forms = true,
     no_world = true,
     no_death = true,
-    no_hp = true,
-    no_falling = true,
-    no_privs = true,
+    no_hp = true, -- HP + breath
+    no_falling = true, -- Falling nodes
+    no_items = true, -- Item entities
+    no_privs = true, -- All non-client privs
     unregister_commands = true,
     no_commands = true,
 }
@@ -52,6 +53,8 @@ local privs = {
     "rollback",
 }
 
+local v5_10_0 = core.has_feature("abm_without_neighbors")
+
 for setting, registry in pairs(to_unregister) do
     if unbuiltin[setting] then
         for registered, total in pairs(registry) do
@@ -71,6 +74,14 @@ if unbuiltin.no_privs then
     for _, priv in pairs(privs) do
         core.registered_privileges[priv] = nil
     end
+end
+
+if unbuiltin.no_falling then
+    core.registered_entities["__builtin:falling_node"] = nil
+end
+
+if unbuiltin.no_items then
+    core.registered_entities["__builtin:item"] = nil
 end
 
 -- Clear the player environment and interface
@@ -128,6 +139,14 @@ core.register_on_joinplayer(function(player)
         player:set_armor_groups({
             fall_damage_add_percent = 1300,
         })
+
+        if v5_10_0 then
+            -- Keep node_damage because why not
+            player:set_flags({
+                breathing = false,
+                drowning = false,
+            })
+        end
     end
 
     if unbuiltin.no_world then
@@ -157,12 +176,13 @@ end)
 core.set_timeofday(0.5)
 
 if unbuiltin.no_hp then
+    -- This is dirty but whatever
     core.registered_on_player_events = {}
     core.register_on_player_event = function(callback)
         table.insert(core.registered_on_player_events, callback)
     end
 
-    table.insert(core.registered_on_player_hpchanges.modifiers, function(player, _, reason)
+    table.insert(core.registered_on_player_hpchanges.modifiers, 1, function(player, _, reason)
         local data
         if reason.type == "fall" then
             data = {pos = player:get_pos(), velocity = player:get_velocity()}
@@ -179,21 +199,13 @@ if unbuiltin.no_hp then
         return 0
     end)
 
-    if not core.has_feature("abm_without_neighbors") then
+    if not v5_10_0 then
         core.register_playerevent(function(player, event)
             if event == "breath_changed" then
                 if player:get_breath() ~= core.PLAYER_MAX_BREATH_DEFAULT then
                     player:set_breath(core.PLAYER_MAX_BREATH_DEFAULT)
                 end
             end
-        end)
-    else
-        core.register_on_joinplayer(function(player)
-            -- Keep node_damage because why not
-            player:set_flags({
-                breathing = false,
-                drowning = false,
-            })
         end)
     end
 end
